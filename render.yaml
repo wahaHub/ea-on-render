@@ -22,7 +22,7 @@ services:
       - key: MYSQL_USER
         value: ea
     # ↓↓↓ 数据持久化磁盘大小可按量调整（GB）
-    disks:
+    disk:
       - name: mysql-data
         mountPath: /var/lib/mysql
         sizeGB: 10
@@ -76,9 +76,9 @@ services:
       - key: MAIL_SMTP_PORT
         value: "587"                # SES 推荐 587（STARTTLS）
       - key: MAIL_SMTP_USER
-        value: AKIAZ4NM5XDRSD2V5LPH # 在 SES -> SMTP settings 生成
+        value: false # 在 SES -> SMTP settings 生成
       - key: MAIL_SMTP_PASS
-        value: BCW+7/3QGbgylH0G5pvbWnqbOpjVrmXxpxIVWuwqUQus  # 同上生成的密码
+        value: false  # 同上生成的密码
       - key: MAIL_FROM
         value: customer@medicaltourismchina.health
 
