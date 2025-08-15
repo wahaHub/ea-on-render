@@ -23,7 +23,7 @@ services:
         value: ea
     # ↓↓↓ 数据持久化磁盘大小可按量调整（GB）
     disk:
-      - name: mysql-data
+        name: mysql-data
         mountPath: /var/lib/mysql
         sizeGB: 10
 
