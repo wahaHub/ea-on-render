@@ -8,7 +8,7 @@ services:
     name: ea-mysql
     runtime: image
     image:
-      url: docker.io/mysql:8.0
+      url: mysql:8.0
     plan: starter
     envVars:
       # ↓↓↓ 这两个是你自己设的强密码；不写在文件里，部署时在 Render 界面手填（sync:false）
