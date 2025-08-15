@@ -1,0 +1,91 @@
+# 一键在 Render 上创建两项：
+# 1) 私有 MySQL（带持久化磁盘）
+# 2) Easy!Appointments Web 服务（对外访问）
+
+services:
+  # ---------- (1) 私有 MySQL，仅内网访问 ----------
+  - type: pserv
+    name: ea-mysql
+    runtime: image
+    image:
+      url: docker.io/mysql:8.0
+    plan: starter
+    envVars:
+      # ↓↓↓ 这两个是你自己设的强密码；不写在文件里，部署时在 Render 界面手填（sync:false）
+      - key: MYSQL_ROOT_PASSWORD
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      # ↓↓↓ 这两个一般不改
+      - key: MYSQL_DATABASE
+        value: easyappointments
+      - key: MYSQL_USER
+        value: ea
+    # ↓↓↓ 数据持久化磁盘大小可按量调整（GB）
+    disks:
+      - name: mysql-data
+        mountPath: /var/lib/mysql
+        sizeGB: 10
+
+  # ---------- (2) Web：Easy!Appointments ----------
+  - type: web
+    name: easyappointments
+    runtime: image
+    image:
+      # 用稳定版本（示例 1.5.0）。也可用 :latest，但不如固定版本可控
+      url: docker.io/alextselegidis/easyappointments:1.5.0
+    plan: starter
+
+    envVars:
+      # === 重要：你的最终访问地址 ===
+      # 用你打算绑定到 Render 的子域（务必与真实访问域名一致）
+      # 先用 https://book.medicaltourismchina.health；如果一开始没绑域名，也可先用
+      # Render 自动分配的 onrender.com 域名，后面再改回来并重启。
+      - key: BASE_URL
+        value: https://book.medicaltourismchina.health
+
+      # 生产环境务必 FALSE
+      - key: DEBUG_MODE
+        value: "FALSE"
+
+      # 服务器时区，按你医院侧时区设
+      - key: TZ
+        value: Asia/Shanghai
+
+      # === 数据库连接（与上面的 MySQL 对应）===
+      # Host 从私有服务动态取（不需要你手填）
+      - key: DB_HOST
+        fromService:
+          name: ea-mysql
+          type: pserv
+          property: host
+      - key: DB_NAME
+        value: easyappointments
+      - key: DB_USERNAME
+        value: ea
+      # 这里要填与你上面 MYSQL_PASSWORD 相同的值（部署时在 Render 界面手填）
+      - key: DB_PASSWORD
+        sync: false
+
+      # === 邮件（AWS SES）===
+      # 按你的 SES 区域填 SMTP HOST，例如：
+      # us-east-1  -> email-smtp.us-east-1.amazonaws.com
+      # eu-west-1  -> email-smtp.eu-west-1.amazonaws.com
+      - key: MAIL_SMTP_HOST
+        value: email-smtp.us-east-1.amazonaws.com  # 例：email-smtp.us-east-1.amazonaws.com
+      - key: MAIL_SMTP_PORT
+        value: "587"                # SES 推荐 587（STARTTLS）
+      - key: MAIL_SMTP_USER
+        value: AKIAZ4NM5XDRSD2V5LPH # 在 SES -> SMTP settings 生成
+      - key: MAIL_SMTP_PASS
+        value: BCW+7/3QGbgylH0G5pvbWnqbOpjVrmXxpxIVWuwqUQus  # 同上生成的密码
+      - key: MAIL_FROM
+        value: customer@medicaltourismchina.health
+
+    # 健康检查（默认首页即可）
+    healthCheckPath: /
+    autoDeploy: yes
+
+    # 可选：也可以在这里直接声明自定义域（等你 DNS 配好后也能在控制台加）
+    # domains:
+    #   - book.medicaltourismchina.health
